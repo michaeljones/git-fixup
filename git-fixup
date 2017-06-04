@@ -1,0 +1,35 @@
+#!/usr/bin/env python
+
+import subprocess
+import os
+
+def main():
+
+    pwd = os.getcwd()
+    root = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).strip()
+
+    lines = subprocess.check_output(['git', 'diff']).split('\n')
+
+    filepath = lines[2][6:]
+
+    line_number = int(lines[4][4:].split(',')[0])
+
+    for line in lines[5:]:
+        if line[0] == '-':
+            break
+        else:
+            line_number += 1
+
+    relative_path = os.path.relpath(os.path.join(root, filepath), pwd)
+
+    blame_lines = subprocess.check_output(['git', 'blame', relative_path, 'HEAD']).split('\n')
+
+    blame_line = blame_lines[line_number]
+    commit_ref = blame_line.split(' ')[0]
+
+    print(commit_ref)
+
+    subprocess.check_output(['git', 'commit', '-a', '--fixup', commit_ref])
+
+main()
+
